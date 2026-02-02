@@ -1,0 +1,22 @@
+docker.clean.sh
+docker-compose.dev.yml
+Dockerfile.dev
+.dockerignore
+.env
+.git
+.gitignore
+index.html
+LICENSE
+README.md
+request.http
+# requirements.txt
+up.sh
+venv/
+
+.github
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
