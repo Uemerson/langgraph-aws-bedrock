@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SSE - AWS Bedrock</title>
+    <style>
+      body { font-family: system-ui, Arial; padding: 20px; }
+      #log { white-space: pre-wrap; border: 1px solid #ddd; padding: 12px; height: 300px; overflow: auto; background:#fafafa; }
+      input[type="text"]{width:70%}
+      button{margin-left:8px}
+    </style>
+  </head>
+  <body>
+    <h2>SSE - AWS Bedrock</h2>
+
+    <div>
+      <input id="prompt" type="text" value="Hello world" />
+      <button id="start">Start</button>
+      <button id="stop" disabled>Stop</button>
+    </div>
+
+    <div id="status">STATUS: IDLE</div>
+    <div id="log"></div>
+
+    <script>
+      let controller = null;
+
+      function log(msg) {
+        const el = document.getElementById("log");
+        el.textContent += msg;
+        el.scrollTop = el.scrollHeight;
+      }
+
+      document.getElementById("start").onclick = async () => {
+        const q = document.getElementById("prompt").value;
+        controller = new AbortController();
+
+        const res = await fetch("http://localhost:8000/conversation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+          body: JSON.stringify({ message: q }),
+          signal: controller.signal
+        });
+
+        if (!res.ok) {
+          log("Error: " + res.status);
+          return;
+        }
+
+        document.getElementById("status").textContent = "STATUS: STREAMING";
+        document.getElementById("start").disabled = true;
+        document.getElementById("stop").disabled = false;
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const text = decoder.decode(value);
+          for (const line of text.split("\n")) {
+
+            if (line == "data: [DONE]") {
+              log("\n\n--- STREAM ENDED ---\n\n");
+              break;
+            }
+            if (line.startsWith("data: [TIMEOUT]")) {
+              log("\n\n--- TIMEOUT ---\n\n");
+              break;
+            }
+            if (line.startsWith("data: [ERROR]")) {
+              log("\n\n--- ERROR ---\n\n");
+              break;
+            }
+
+            if (line.startsWith("data: ")) {
+              const data = line.replace("data: ", "").trim();
+              log(`${data} `);
+            }
+            
+          }
+        }
+
+        document.getElementById("status").textContent = "STATUS: FINISHED";
+        document.getElementById("start").disabled = false;
+        document.getElementById("stop").disabled = true;
+      };
+
+      document.getElementById("stop").onclick = () => {
+        if (controller) {
+          controller.abort();
+          log("\n--- STREAM ABORTED ---\n");
+          document.getElementById("status").textContent = "STATUS: STOPPED";
+          document.getElementById("start").disabled = false;
+          document.getElementById("stop").disabled = true;
+        }
+      };
+    </script>
+  </body>
+</html>
