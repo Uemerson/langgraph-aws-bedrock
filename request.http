@@ -1,0 +1,35 @@
+# @name AskValidQuestion
+POST http://localhost:8000/conversation
+Content-Type: application/json
+
+{
+    "message": "Quais pizzas vegetarianas vocês oferecem?"
+}
+
+###
+
+# @name AskInvalidQuestion
+POST http://localhost:8000/conversation
+Content-Type: application/json
+
+{
+    "message": "Qual é a capital da França?"
+}
+
+###
+
+# @name KnowledgeBaseUpload
+POST http://localhost:8000/knowledgebase/upload
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="cardapio.pdf"
+Content-Type: application/pdf
+
+< ./docs/CARDÁPIO.pdf
+--boundary--
+
+###
+
+# @name HelloWorld
+GET http://localhost:8000/
