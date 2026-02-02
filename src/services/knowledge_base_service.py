@@ -2,6 +2,7 @@
 Knowledge Base Service Module
 """
 
+import logging
 import uuid
 from io import BytesIO
 
@@ -10,6 +11,8 @@ from fastapi.responses import JSONResponse
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pinecone import Pinecone
 from pypdf import PdfReader
+
+logger = logging.getLogger(__name__)
 
 
 class KnowledgeBaseService:
@@ -57,7 +60,7 @@ class KnowledgeBaseService:
 
             return JSONResponse(content={}, status_code=200)
         except Exception as e:
-            print(e)
+            logger.error(e)
             return JSONResponse(
                 content={
                     "detail": "Internal Server Error",
